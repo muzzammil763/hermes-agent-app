@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Trunk -->
+  <path d="M12 22v-10"/>
+  <!-- Main branches -->
+  <path d="M12 12l-4-4"/>
+  <path d="M12 12l4-4"/>
+  <!-- Top foliage -->
+  <path d="M12 2c-3 0-5 2-5 5 0 2 2 4 5 4s5-2 5-4c0-3-2-5-5-5z"/>
+  <!-- Lower foliage left -->
+  <path d="M6 8c-2 0-4 2-4 4 0 2 2 3 4 3s4-1 4-3c0-2-2-4-4-4z"/>
+  <!-- Lower foliage right -->
+  <path d="M18 8c2 0 4 2 4 4 0 2-2 3-4 3s-4-1-4-3c0-2 2-4 4-4z"/>
+</svg>

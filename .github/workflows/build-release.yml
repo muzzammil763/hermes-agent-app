@@ -1,0 +1,72 @@
+name: Build and Release APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK (Release)
+        run: flutter build apk --release
+
+      - name: Get version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep "version:" pubspec.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Hermes Agent App v${{ steps.version.outputs.version }}
+          body: |
+            ## Hermes Agent App v${{ steps.version.outputs.version }}
+            
+            ### Features
+            - Full Hermes Agent integration
+            - Real-time streaming chat
+            - Connection configuration
+            - Session persistence
+            
+            ### Installation
+            1. Download the APK below
+            2. Install on your Android device
+            3. Configure with your Hermes Agent backend:
+               - Host: Your machine's IP address (e.g., 192.168.1.100)
+               - Port: 8643 (default)
+            
+            ### Backend Setup
+            Run Hermes Agent with network access:
+            ```bash
+            cd ~/Muzamil/Projects/hermes-agent
+            source venv/bin/activate
+            hermes --host 0.0.0.0 --port 8643
+            ```
+            
+            Get your IP address:
+            ```bash
+            # macOS
+            ipconfig getifaddr en0
+            ```
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
