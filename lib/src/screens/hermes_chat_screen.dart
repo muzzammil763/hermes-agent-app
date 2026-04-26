@@ -280,7 +280,7 @@ class _HermesChatScreenState extends State<HermesChatScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   void _showHistoryPanel() {
