@@ -51,6 +51,7 @@ class _HermesChatScreenState extends State<HermesChatScreen> {
     final prefs = await SharedPreferences.getInstance();
     final host = prefs.getString('hermes_host');
     final port = prefs.getInt('hermes_port') ?? 8643;
+    final useHttps = prefs.getBool('hermes_use_https') ?? false;
     final apiKey = prefs.getString('hermes_api_key');
     final sessionId = prefs.getString('hermes_session_id');
 
@@ -59,6 +60,7 @@ class _HermesChatScreenState extends State<HermesChatScreen> {
         _config = HermesAgentConfig(
           host: host,
           port: port,
+          useHttps: useHttps,
           apiKey: apiKey,
           sessionId: sessionId,
         );
@@ -171,73 +173,98 @@ class _HermesChatScreenState extends State<HermesChatScreen> {
     final portController = TextEditingController(text: _config?.port.toString() ?? '8643');
     final apiKeyController = TextEditingController(text: _config?.apiKey ?? '');
     final sessionIdController = TextEditingController(text: _config?.sessionId ?? '');
+    bool useHttps = _config?.useHttps ?? false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Configure Hermes Agent'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: hostController,
-                decoration: const InputDecoration(
-                  labelText: 'Host',
-                  hintText: '192.168.1.100',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Configure Hermes Agent'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: hostController,
+                  decoration: const InputDecoration(
+                    labelText: 'Host',
+                    hintText: '192.168.1.100',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: portController,
-                decoration: const InputDecoration(
-                  labelText: 'Port',
-                  hintText: '8643',
+                const SizedBox(height: 16),
+                TextField(
+                  controller: portController,
+                  decoration: const InputDecoration(
+                    labelText: 'Port',
+                    hintText: '8643',
+                  ),
+                  keyboardType: TextInputType.number,
                 ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: apiKeyController,
-                decoration: const InputDecoration(
-                  labelText: 'API Key (Optional)',
-                  hintText: 'Bearer token if required',
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text('Use HTTPS'),
+                    const Spacer(),
+                    Switch(
+                      value: useHttps,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          useHttps = value;
+                          // Auto-switch port when toggling HTTPS
+                          if (value) {
+                            portController.text = '443';
+                          } else {
+                            portController.text = '8643';
+                          }
+                        });
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: sessionIdController,
-                decoration: const InputDecoration(
-                  labelText: 'Session ID (Optional)',
-                  hintText: 'For stateless sessions',
+                const SizedBox(height: 16),
+                TextField(
+                  controller: apiKeyController,
+                  decoration: const InputDecoration(
+                    labelText: 'API Key (Optional)',
+                    hintText: 'Bearer token if required',
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: sessionIdController,
+                  decoration: const InputDecoration(
+                    labelText: 'Session ID (Optional)',
+                    hintText: 'For stateless sessions',
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final newConfig = HermesAgentConfig(
-                host: hostController.text.trim(),
-                port: int.tryParse(portController.text.trim()) ?? 8643,
-                apiKey: apiKeyController.text.trim().isEmpty
-                    ? null
-                    : apiKeyController.text.trim(),
-                sessionId: sessionIdController.text.trim().isEmpty
-                    ? null
-                    : sessionIdController.text.trim(),
-              );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newConfig = HermesAgentConfig(
+                  host: hostController.text.trim(),
+                  port: int.tryParse(portController.text.trim()) ?? (useHttps ? 443 : 8643),
+                  useHttps: useHttps,
+                  apiKey: apiKeyController.text.trim().isEmpty
+                      ? null
+                      : apiKeyController.text.trim(),
+                  sessionId: sessionIdController.text.trim().isEmpty
+                      ? null
+                      : sessionIdController.text.trim(),
+                );
 
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('hermes_host', newConfig.host);
-              await prefs.setInt('hermes_port', newConfig.port);
-              await prefs.setString('hermes_api_key', newConfig.apiKey ?? '');
-              await prefs.setString('hermes_session_id', newConfig.sessionId ?? '');
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('hermes_host', newConfig.host);
+                await prefs.setInt('hermes_port', newConfig.port);
+                await prefs.setBool('hermes_use_https', newConfig.useHttps);
+                await prefs.setString('hermes_api_key', newConfig.apiKey ?? '');
+                await prefs.setString('hermes_session_id', newConfig.sessionId ?? '');
 
               setState(() {
                 _config = newConfig;

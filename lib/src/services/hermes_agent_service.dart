@@ -19,6 +19,15 @@ class HermesAgentConfig {
     this.sessionId,
   });
 
+  /// Create config for Cloudflare tunnel (HTTPS on port 443)
+  factory HermesAgentConfig.forCloudflare(String host) {
+    return HermesAgentConfig(
+      host: host,
+      port: 443,
+      useHttps: true,
+    );
+  }
+
   String get baseUrl {
     final scheme = useHttps ? 'https' : 'http';
     return '$scheme://$host:$port';
